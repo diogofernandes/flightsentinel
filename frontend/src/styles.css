@@ -1,0 +1,56 @@
+/* styles.css
+ *
+ * Global CSS for the dark cockpit theme.
+ * We define CSS custom properties (variables) here so every
+ * component can use the same colours without repeating them.
+ *
+ * EFIS colour conventions (real cockpit displays):
+ *   Amber   = primary data readouts
+ *   Cyan    = secondary / reference data
+ *   Red     = warnings and alerts
+ *   Green   = normal / ok status
+ */
+
+/* CSS variables — change these to retheme the whole app */
+:root {
+  --bg-primary:   #0b0c0f;   /* main background — near black */
+  --bg-secondary: #10121a;   /* card / panel background */
+  --bg-tertiary:  #161923;   /* hover states, alternating rows */
+  --border:       #1e2333;   /* subtle borders */
+
+  --amber:        #f59e0b;   /* primary readout colour */
+  --amber-dim:    #92610a;   /* dimmed amber for labels */
+  --cyan:         #22d3ee;   /* secondary data */
+  --red:          #ef4444;   /* alerts and warnings */
+  --green:        #22c55e;   /* normal status */
+  --purple:       #a78bfa;   /* pitch line on chart */
+
+  --text-primary:   #e2e8f0; /* main text */
+  --text-secondary: #94a3b8; /* secondary text */
+  --text-muted:     #64748b; /* labels, units */
+
+  --font-mono:  'JetBrains Mono', monospace;  /* readouts */
+  --font-body:  'Inter', sans-serif;          /* labels */
+}
+
+/* Reset: remove browser default margins/padding */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base page styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased; /* smoother text on Mac */
+}
+
+/* Recharts tooltip customisation */
+.recharts-tooltip-wrapper {
+  outline: none;
+}

@@ -1,5 +1,6 @@
 """Build and publish the labelled React replay to this repository's Pages branch."""
 import os
+import sys
 from pathlib import Path
 import shutil
 import subprocess
@@ -12,12 +13,11 @@ def git(args, cwd):
     return run(["git", "-c", "credential.helper=", "-c", "credential.helper=!gh auth git-credential", *args], cwd=cwd)
 env = {**os.environ, "VITE_DEMO_MODE": "replay"}
 run(["npm", "run", "build", "--", "--base=/flightsentinel/"], cwd=root / "frontend", env=env)
-run(["python", "scripts/package-public.py"], cwd=root)
+run([sys.executable, "scripts/package-public.py"], cwd=root)
 with tempfile.TemporaryDirectory(prefix="flightsentinel-pages-") as location:
     staging = Path(location)
     git(["init", "-b", "gh-pages"], staging)
     git(["remote", "add", "origin", remote], staging)
-    exists = git(["ls-remote", "--heads", "origin", "gh-pages"], staging)
     refs = subprocess.check_output(["git", "-c", "credential.helper=", "-c", "credential.helper=!gh auth git-credential", "ls-remote", "--heads", "origin", "gh-pages"], cwd=staging, text=True)
     if refs.strip():
         git(["fetch", "origin", "gh-pages"], staging)

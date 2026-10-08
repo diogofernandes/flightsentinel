@@ -74,7 +74,7 @@ export default function App() {
             <AlertLog alerts={alerts} onClear={() => setAlerts([])} />
             <p className="explanation">
               Simulation time · Latest 100 events observed by this browser.
-              {replay ? 'Replay restarts reset the log; event states come from the saved Python run.' : 'Refresh clears the log; reconnect restores only the latest server event.'}
+              {replay ? 'Replay restarts reset the log, event states come from the saved Python run.' : 'Refresh clears the log, reconnect restores only the latest server event.'}
             </p>
           </section>
         </aside>

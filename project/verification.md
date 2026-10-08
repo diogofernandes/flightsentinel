@@ -14,8 +14,8 @@ These are local results, not a claim of a completed GitHub Actions run.
 - Desktop/mobile screenshots are captures of the actual app and portfolio page,
   not generated mockups.
 - The dependency update replaces Vite 5 and Recharts 2 and removes the unused icon package.
-- GitHub Actions is configured to run backend tests/evaluation and frontend tests/build
-  after push. It has not been dispatched as part of this local change.
+- A local GitHub Actions recipe is prepared, but automated backend/frontend CI is not
+  enabled in the published source yet. The authenticated publishing credential lacks workflow scope.
 
 Reproduce the numerical evaluation with:
 
@@ -34,3 +34,10 @@ running application, a static docs server, and Playwright/Chromium (or installed
 One upstream warning remains: Starlette's test client deprecates its httpx
 transport in favor of httpx2. Tests pass using the pinned httpx version; no
 warnings are suppressed.
+
+
+## Public CV demo — 2026-10-08
+
+Published at https://diogofernandes.github.io/flightsentinel/. The same React dashboard runs in explicit recorded-replay mode, serving actual saved Python scores and alert states. GitHub Pages does not run the Python backend.
+
+A fresh Chrome session verified the public HTTPS URL: four charts, confirmed events, pause/resume, restart before an anomaly, desktop/mobile layout, and navigation to the explanation and results pages. No browser errors or missing assets were observed. The 13 backend and six frontend tests also passed locally after deployment preparation.

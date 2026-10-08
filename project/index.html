@@ -83,14 +83,14 @@
       <p class="muted">An attractive dashboard does not make an anomaly detector useful. The important questions are how often it raises false alarms, what it misses, and whether multiple viewers see the same stream.</p>
       <div class="grid">
         <div class="card"><h3>One producer, many viewers</h3><p class="muted">A paced server task generates and scores each frame once. Bounded subscriber queues prevent slow clients from building a backlog. Opening another browser does not change simulation speed.</p></div>
-        <div class="card"><h3>Measured calibration</h3><p class="muted">The threshold is the 99.5th percentile of separate normal calibration data. Test seeds do not select it. Three high frames confirm an alert; five low frames and hysteresis clear it.</p></div>
+        <div class="card"><h3>Measured calibration</h3><p class="muted">The threshold is the 99.5th percentile of separate normal calibration data. Test seeds do not select it. Three high frames confirm an alert, five low frames and hysteresis clear it.</p></div>
       </div>
     </section>
     <section>
       <h2>The actual application</h2>
-      <p class="muted">A React dashboard shows six readouts, four charts, and confirmed events. Missing or stale telemetry is marked unavailable; the connection retries with backoff.</p>
+      <p class="muted">A React dashboard shows six readouts, four charts, and confirmed events. Missing or stale telemetry is marked unavailable, the connection retries with backoff.</p>
       <img class="screenshot" src="dashboard.png" alt="FlightSentinel React dashboard with synthetic telemetry, model score, event log, and live charts" loading="lazy">
-      <p class="muted" style="font-size:12px;margin-top:12px">The backend and dashboard run locally. The replay above is a saved, scored recording; it does not perform browser inference.</p>
+      <p class="muted" style="font-size:12px;margin-top:12px">The backend and dashboard run locally. The replay above is a saved, scored recording, it does not perform browser inference.</p>
     </section>
     <section id="evidence">
       <h2>Results, including the weaknesses</h2>
@@ -108,7 +108,7 @@
   → WebSocket
   → Validated React state
   → Instruments / charts / observed event log</pre>
-      <p class="muted">Monotonic deadlines target 10 Hz; they do not provide hard real-time guarantees. The health endpoint reports stream freshness and timing overruns. A single server worker owns a simulation. The dashboard repeats an explicitly identified 120-second session rather than simulating an endless descent.</p>
+      <p class="muted">Monotonic deadlines target 10 Hz, they do not provide hard real-time guarantees. The health endpoint reports stream freshness and timing overruns. A single server worker owns a simulation. The dashboard repeats an explicitly identified 120-second session rather than simulating an endless descent.</p>
       <p class="muted">Tests cover reproducibility, altitude/VSI consistency, calibration, shared streaming, disconnect cleanup, stale data, and reconnect disposal. GitHub Actions runs those checks and the frontend build. This is demonstrator verification, not certification.</p>
     </section>
     <section id="run">
@@ -130,7 +130,7 @@ npm test</pre>
     </section>
     <section>
       <h2>Diogo Fernandes</h2>
-      <p class="muted">VFX Compositor and AI/ML Pipeline Engineer · Lisbon, Portugal</p>
+      <p class="muted">VFX Compositor and AI/ML Pipeline Engineer</p>
       <p><a href="https://github.com/diogofernandes">GitHub</a> · <a href="https://www.linkedin.com/in/diogo-fernandes-5221922a/">LinkedIn</a></p>
     </section>
   </main>
@@ -205,7 +205,7 @@ npm test</pre>
           if (!paused && !document.hidden) { index = (index + 1) % r.frames.length; render(); }
         }, 1000 / r.rate_hz);
       } catch {
-        document.getElementById('recording-info').textContent = 'Recording unavailable. Serve this directory over HTTP; no fabricated fallback data is shown.';
+        document.getElementById('recording-info').textContent = 'Recording unavailable. Serve this directory over HTTP, no fabricated fallback data is shown.';
       }
     }
     loadResults(); loadReplay();

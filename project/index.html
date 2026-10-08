@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A measured synthetic telemetry experiment with React, FastAPI and Isolation Forest.">
+  <title>FlightSentinel · Diogo Fernandes</title>
+  <style>
+    :root { color-scheme:dark; --bg:#0b0c0f; --panel:#10121a; --border:#263044; --text:#e2e8f0; --muted:#94a3b8; --amber:#f59e0b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.75 system-ui,sans-serif; }
+    .wrap { max-width:1000px; margin:auto; padding:0 24px; }
+    nav { border-bottom:1px solid var(--border); padding:20px 0; }
+    nav .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    a { color:#67e8f9; text-underline-offset:4px; }
+    a:focus-visible,button:focus-visible { outline:2px solid #67e8f9; outline-offset:4px; }
+    .logo { color:var(--amber); font:700 14px ui-monospace,monospace; letter-spacing:2px; }
+    .page-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-top:24px; } .page-tabs a { padding:8px 16px; border:1px solid var(--border); border-radius:6px; text-decoration:none; } .page-tabs a[aria-current="page"] { color:var(--amber); border-color:var(--amber); }
+    .hero { padding:80px 0 40px; }
+    .eyebrow { color:var(--amber); font:12px ui-monospace,monospace; letter-spacing:2px; text-transform:uppercase; }
+    h1 { font-size:clamp(40px,8vw,76px); line-height:1.05; letter-spacing:-3px; margin:24px 0; }
+    h1 span { color:var(--amber); }
+    h2 { font-size:26px; line-height:1.3; margin:0 0 16px; }
+    h3 { font-size:17px; margin:0 0 12px; }
+    .intro { font-size:20px; color:var(--muted); max-width:740px; }
+    .tags { display:flex; flex-wrap:wrap; gap:10px; margin:28px 0; }
+    .tag { border:1px solid var(--border); border-radius:4px; padding:4px 10px; color:var(--muted); font:12px ui-monospace,monospace; }
+    section { padding:40px 0; border-top:1px solid var(--border); }
+    p { margin:0 0 16px; }
+    .muted { color:var(--muted); }
+    .recording { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:24px; margin:32px 0; }
+    .recording-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .recording-label { color:var(--muted); font:11px ui-monospace,monospace; }
+    .instruments { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:24px 0; }
+    .instrument small { display:block; color:var(--muted); font:11px ui-monospace,monospace; }
+    .instrument strong { display:block; color:var(--amber); font:clamp(16px,3vw,28px) ui-monospace,monospace; margin:8px 0; }
+    .track { height:8px; background:var(--border); border-radius:4px; position:relative; margin:20px 0 12px; }
+    .fill { height:100%; width:0; background:#22c55e; border-radius:4px; }
+    .marker { position:absolute; width:2px; top:-4px; bottom:-4px; background:#f87171; display:none; }
+    button { background:#1e293b; color:var(--text); border:1px solid #475569; border-radius:4px; padding:6px 14px; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:default; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:24px; }
+    pre { overflow:auto; background:var(--panel); border:1px solid var(--border); padding:24px; font:13px/1.8 ui-monospace,monospace; }
+    code { font:13px ui-monospace,monospace; color:#67e8f9; }
+    .table-scroll { overflow:auto; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th,td { padding:12px; text-align:left; border-bottom:1px solid var(--border); }
+    th { color:var(--muted); font-weight:500; }
+    .notice { border-left:3px solid var(--amber); padding-left:16px; color:var(--muted); }
+    .screenshot { width:100%; border:1px solid var(--border); border-radius:6px; }
+    footer { padding:32px 0; color:var(--muted); border-top:1px solid var(--border); font-size:13px; }
+    @media(max-width:640px) { .hero { padding-top:48px; } .wrap { padding:0 16px; } .grid { grid-template-columns:1fr; } .instruments { grid-template-columns:repeat(3,minmax(0,1fr)); } .recording { padding:16px; } }
+  </style>
+</head>
+<body>
+  <nav><div class="wrap"><span class="logo">FLIGHTSENTINEL</span><div><a href="about.html">Project explained</a> · <a href="#evidence">Results</a> · <a href="#run">Run it</a> · <a href="https://github.com/diogofernandes/flightsentinel">Source</a></div></div></nav>
+  <main class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Synthetic telemetry · Portfolio experiment</p>
+      <h1>Flight<span>Sentinel</span></h1>
+      <p class="intro">A shared telemetry stream, an anomaly model, and a cockpit-inspired dashboard. Built to explore calibration, real-time delivery, and the limits of a simple detector.</p>
+      <div class="tags"><span class="tag">React</span><span class="tag">FastAPI / WebSockets</span><span class="tag">scikit-learn</span><span class="tag">Seeded evaluation</span></div>
+      <p class="notice">Generated signals only. This is not avionics, a validated stall detector, or software for operational flight decisions.</p>
+      <nav class="page-tabs" aria-label="Project pages"><a href="/flightsentinel/">Dashboard demo</a><a href="index.html" aria-current="page">Demo &amp; results</a><a href="about.html">Project explained</a></nav>
+      <div class="recording">
+        <div class="recording-head"><span class="recording-label">RECORDED SYNTHETIC RUN · MODEL-SCORED REPLAY</span><button id="pause" disabled>Pause replay</button></div>
+        <p class="muted" id="recording-info" style="font-size:12px;margin-top:12px">Loading recorded data…</p>
+        <div class="instruments">
+          <div class="instrument"><small>ALT · FT</small><strong id="altitude">---</strong></div>
+          <div class="instrument"><small>IAS · KT</small><strong id="airspeed">---</strong></div>
+          <div class="instrument"><small>PITCH · DEG</small><strong id="pitch">---</strong></div>
+          <div class="instrument"><small>ROLL · DEG</small><strong id="roll">---</strong></div>
+          <div class="instrument"><small>VSI · FT/MIN</small><strong id="vsi">---</strong></div>
+        </div>
+        <div class="track"><div class="fill" id="fill"></div><div class="marker" id="marker"></div></div>
+        <p id="score" class="recording-label">NO CURRENT SCORE</p>
+        <p id="replay-status" class="recording-label" role="status"></p>
+      </div>
+    </div>
+    <section>
+      <h2>The engineering problem</h2>
+      <p class="muted">An attractive dashboard does not make an anomaly detector useful. The important questions are how often it raises false alarms, what it misses, and whether multiple viewers see the same stream.</p>
+      <div class="grid">
+        <div class="card"><h3>One producer, many viewers</h3><p class="muted">A paced server task generates and scores each frame once. Bounded subscriber queues prevent slow clients from building a backlog. Opening another browser does not change simulation speed.</p></div>
+        <div class="card"><h3>Measured calibration</h3><p class="muted">The threshold is the 99.5th percentile of separate normal calibration data. Test seeds do not select it. Three high frames confirm an alert; five low frames and hysteresis clear it.</p></div>
+      </div>
+    </section>
+    <section>
+      <h2>The actual application</h2>
+      <p class="muted">A React dashboard shows six readouts, four charts, and confirmed events. Missing or stale telemetry is marked unavailable; the connection retries with backoff.</p>
+      <img class="screenshot" src="dashboard.png" alt="FlightSentinel React dashboard with synthetic telemetry, model score, event log, and live charts" loading="lazy">
+      <p class="muted" style="font-size:12px;margin-top:12px">The backend and dashboard run locally. The replay above is a saved, scored recording; it does not perform browser inference.</p>
+    </section>
+    <section id="evidence">
+      <h2>Results, including the weaknesses</h2>
+      <p class="muted">Training seed 42, calibration seed 43, and held-out test seeds 101–103. Test scenarios share the generator and nominal envelope with training. Different noise seeds are not independent flight data.</p>
+      <div id="results"><p class="muted">Loading measured results…</p></div>
+      <p class="notice">The model handles the combined descent deviation better than isolated bank or airspeed changes. Simple rules can be the stronger detector for obvious single-channel violations. No claim of universal ML superiority is made.</p>
+      <p><a href="evaluation.md">Full evaluation and limitations</a> · <a href="evaluation.json">Raw metrics</a> · <a href="demo-data.json">Recorded model output</a></p>
+    </section>
+    <section>
+      <h2>Architecture and verification</h2>
+      <pre>Seeded simulator
+  → Isolation Forest (background inference)
+  → Alert confirmation / server event IDs
+  → Bounded subscriber queues
+  → WebSocket
+  → Validated React state
+  → Instruments / charts / observed event log</pre>
+      <p class="muted">Monotonic deadlines target 10 Hz; they do not provide hard real-time guarantees. The health endpoint reports stream freshness and timing overruns. A single server worker owns a simulation. The dashboard repeats an explicitly identified 120-second session rather than simulating an endless descent.</p>
+      <p class="muted">Tests cover reproducibility, altitude/VSI consistency, calibration, shared streaming, disconnect cleanup, stale data, and reconnect disposal. GitHub Actions runs those checks and the frontend build. This is demonstrator verification, not certification.</p>
+    </section>
+    <section id="run">
+      <h2>Run and reproduce</h2>
+      <pre>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cd frontend
+npm ci
+npm run build
+cd ..
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000</pre>
+      <p class="muted">Python 3.12 and Node.js 22.12+ (or 20.19+). Open localhost:8000. The model trains and calibrates at startup.</p>
+      <pre>python -m pytest tests -q
+python -m backend.evaluate --replay
+cd frontend
+npm test</pre>
+      <p class="muted">No real telemetry ingestion, persistent alert store, phase-aware detector, or aircraft-specific validation is implemented. Those are extensions, not existing features.</p>
+    </section>
+    <section>
+      <h2>Diogo Fernandes</h2>
+      <p class="muted">VFX Compositor and AI/ML Pipeline Engineer · Lisbon, Portugal</p>
+      <p><a href="https://github.com/diogofernandes">GitHub</a> · <a href="https://www.linkedin.com/in/diogo-fernandes-5221922a/">LinkedIn</a></p>
+    </section>
+  </main>
+  <footer><div class="wrap">FlightSentinel · Synthetic demonstrator · React / FastAPI / scikit-learn</div></footer>
+  <script>
+    const percent = n => (n * 100).toFixed(2) + '%';
+    async function loadResults() {
+      try {
+        const response = await fetch('evaluation.json');
+        if (!response.ok) throw new Error('Results unavailable');
+        const r = await response.json();
+        const box = document.getElementById('results');
+        box.replaceChildren();
+        const summary = document.createElement('p');
+        summary.className = 'muted';
+        summary.textContent = 'Normal-only holdout: ' + percent(r.normal_only.false_positive_rate) +
+          ' raw frame false positives; ' + r.normal_only.events + ' confirmed alerts in ' +
+          r.normal_only.frames + ' frames. Calibrated threshold: ' + r.threshold.toFixed(4) + '.';
+        box.append(summary);
+        const scroll = document.createElement('div');
+        scroll.className = 'table-scroll';
+        const table = document.createElement('table');
+        const header = table.insertRow();
+        ['Scenario / severity', 'ML frame recall', 'ML frame FPR', 'Rule recall', 'ML complete events'].forEach(label => {
+          const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
+        });
+        r.runs.forEach(run => {
+          const row = table.insertRow();
+          [run.scenario + ' / ' + run.severity, percent(run.model.recall),
+           percent(run.model.false_positive_rate), percent(run.baseline.recall),
+           run.model_events.detected_events + ' / ' + run.model_events.injected_events].forEach(value => {
+             row.insertCell().textContent = value;
+           });
+        });
+        scroll.append(table); box.append(scroll);
+        const detail = document.createElement('p');
+        detail.className = 'muted'; detail.style.fontSize = '12px';
+        detail.textContent = 'Raw frame metrics use the score threshold; events use confirmation and hysteresis. The rule baseline uses illustrative limits. Details and detection delays are in the full report.';
+        box.append(detail);
+      } catch {
+        document.getElementById('results').textContent = 'Results could not load. Use the full evaluation link below.';
+      }
+    }
+    async function loadReplay() {
+      const button = document.getElementById('pause');
+      try {
+        const response = await fetch('demo-data.json');
+        if (!response.ok) throw new Error('Replay unavailable');
+        const r = await response.json();
+        let index = 0, paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        button.disabled = false;
+        function updateButton() { button.textContent = paused ? 'Play replay' : 'Pause replay'; }
+        updateButton();
+        button.onclick = () => { paused = !paused; updateButton(); };
+        const marker = document.getElementById('marker');
+        marker.style.display = 'block'; marker.style.left = r.threshold * 100 + '%';
+        function render() {
+          const f = r.frames[index];
+          for (const key of ['altitude', 'airspeed', 'pitch', 'roll', 'vsi']) {
+            document.getElementById(key).textContent = ['altitude', 'vsi'].includes(key) ? Math.round(f[key]).toLocaleString() : f[key].toFixed(1);
+          }
+          const colour = f.alert ? '#ef4444' : f.score > r.threshold ? '#f59e0b' : '#22c55e';
+          document.getElementById('fill').style.width = f.score * 100 + '%';
+          document.getElementById('fill').style.background = colour;
+          document.getElementById('score').textContent = 'RELATIVE SCORE ' + f.score.toFixed(3) + ' · THRESHOLD ' + r.threshold.toFixed(3) + ' · NOT A PROBABILITY';
+          document.getElementById('recording-info').textContent = 'Seed ' + r.seed + ' · ' + f.timestamp.toFixed(1) + ' / 90 simulation seconds · Loops · Saved model output';
+          document.getElementById('replay-status').textContent = f.alert ? 'CONFIRMED MODEL ALERT' : 'NO CONFIRMED MODEL ALERT';
+          document.getElementById('replay-status').style.color = colour;
+        }
+        render();
+        setInterval(() => {
+          if (!paused && !document.hidden) { index = (index + 1) % r.frames.length; render(); }
+        }, 1000 / r.rate_hz);
+      } catch {
+        document.getElementById('recording-info').textContent = 'Recording unavailable. Serve this directory over HTTP; no fabricated fallback data is shown.';
+      }
+    }
+    loadResults(); loadReplay();
+  </script>
+</body>
+</html>

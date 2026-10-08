@@ -1,18 +1,8 @@
-// AlertLog.jsx
-//
-// Scrollable table of anomaly events.
-// A new row is added every time an anomaly starts (rising edge).
-// Most recent event appears at the top.
-//
-// PROPS:
-//   alerts   array   — array of alert event objects
-//   onClear  function — called when "CLEAR" button is pressed
-
 import React from 'react'
 
 // Column definitions — drives the table header and row rendering
 const COLUMNS = [
-  { key: 'time',     label: 'TIME',      width: '70px' },
+  { key: 'time',     label: 'SIM TIME',      width: '70px' },
   { key: 'score',    label: 'SCORE',     width: '60px' },
   { key: 'altitude', label: 'ALT (FT)',  width: '80px' },
   { key: 'airspeed', label: 'IAS (KTS)', width: '80px' },
@@ -27,8 +17,8 @@ export default function AlertLog({ alerts = [], onClear }) {
 
       {/* Header row */}
       <div style={styles.header}>
-        <span style={styles.title}>⚠ ANOMALY LOG</span>
-        <span style={styles.count}>{alerts.length} events</span>
+        <span style={styles.title}>CONFIRMED EVENT LOG</span>
+        <span style={styles.count}>{alerts.length} {alerts.length === 1 ? 'event' : 'events'}</span>
         <button style={styles.clearBtn} onClick={onClear}>
           CLEAR
         </button>
@@ -54,7 +44,7 @@ export default function AlertLog({ alerts = [], onClear }) {
               // Empty state
               <tr>
                 <td colSpan={COLUMNS.length} style={styles.emptyCell}>
-                  No anomalies detected
+                  No confirmed events observed
                 </td>
               </tr>
             ) : (
@@ -64,7 +54,7 @@ export default function AlertLog({ alerts = [], onClear }) {
                   backgroundColor: idx % 2 === 0 ? '#161923' : '#10121a',
                 }}>
                   <td style={styles.td}>{alert.time}</td>
-                  <td style={{ ...styles.td, color: scoreColour(alert.score) }}>
+                  <td style={{ ...styles.td, color: '#f87171' }}>
                     {alert.score.toFixed(3)}
                   </td>
                   <td style={styles.td}>{Math.round(alert.altitude).toLocaleString()}</td>
@@ -81,13 +71,6 @@ export default function AlertLog({ alerts = [], onClear }) {
 
     </div>
   )
-}
-
-// Helper: pick score cell colour by severity
-function scoreColour(score) {
-  if (score > 0.8) return '#ef4444'   // red — severe
-  if (score > 0.65) return '#f59e0b'  // amber — moderate
-  return '#22d3ee'                     // cyan — mild
 }
 
 const styles = {
@@ -131,7 +114,7 @@ const styles = {
     letterSpacing:   '1px',
   },
   tableWrap: {
-    overflowY:  'auto',
+    overflow:   'auto',
     maxHeight:  '200px',
   },
   table: {
@@ -143,7 +126,7 @@ const styles = {
   th: {
     padding:       '6px 10px',
     textAlign:     'left',
-    color:         '#64748b',
+    color:         '#94a3b8',
     fontSize:      '9px',
     letterSpacing: '1px',
     borderBottom:  '1px solid #1e2333',

@@ -1,56 +1,55 @@
-/* styles.css
- *
- * Global CSS for the dark cockpit theme.
- * We define CSS custom properties (variables) here so every
- * component can use the same colours without repeating them.
- *
- * EFIS colour conventions (real cockpit displays):
- *   Amber   = primary data readouts
- *   Cyan    = secondary / reference data
- *   Red     = warnings and alerts
- *   Green   = normal / ok status
- */
-
-/* CSS variables — change these to retheme the whole app */
 :root {
-  --bg-primary:   #0b0c0f;   /* main background — near black */
-  --bg-secondary: #10121a;   /* card / panel background */
-  --bg-tertiary:  #161923;   /* hover states, alternating rows */
-  --border:       #1e2333;   /* subtle borders */
-
-  --amber:        #f59e0b;   /* primary readout colour */
-  --amber-dim:    #92610a;   /* dimmed amber for labels */
-  --cyan:         #22d3ee;   /* secondary data */
-  --red:          #ef4444;   /* alerts and warnings */
-  --green:        #22c55e;   /* normal status */
-  --purple:       #a78bfa;   /* pitch line on chart */
-
-  --text-primary:   #e2e8f0; /* main text */
-  --text-secondary: #94a3b8; /* secondary text */
-  --text-muted:     #64748b; /* labels, units */
-
-  --font-mono:  'JetBrains Mono', monospace;  /* readouts */
-  --font-body:  'Inter', sans-serif;          /* labels */
+  color-scheme: dark;
+  font-family: Inter, system-ui, sans-serif;
+  color: #e2e8f0;
+  background: #0b0c0f;
+  font-synthesis: none;
 }
-
-/* Reset: remove browser default margins/padding */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-size: 14px; line-height: 1.5; }
+button { font: inherit; }
+button:focus-visible, a:focus-visible { outline: 2px solid #22d3ee; outline-offset: 3px; }
+.app { max-width: 1600px; margin: auto; }
+.top-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 24px; border-bottom: 1px solid #263044; }
+.brand { color: #f59e0b; font: 700 20px ui-monospace, monospace; letter-spacing: 2px; }
+.connection { display: flex; gap: 8px; align-items: center; font: 11px ui-monospace, monospace; color: #cbd5e1; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.alert-banner { color: #f87171; font: 700 12px ui-monospace, monospace; min-height: 18px; }
+.demo-notice { padding: 10px 24px; color: #94a3b8; font: 11px ui-monospace, monospace; background: #10121a; border-bottom: 1px solid #263044; }
+.dashboard { display: grid; grid-template-columns: 440px minmax(0, 1fr); gap: 20px; padding: 24px; }
+.left-panel, .chart-panel { min-width: 0; }
+.left-panel { display: flex; flex-direction: column; gap: 24px; }
+h2 { margin: 0 0 10px; color: #94a3b8; font: 11px ui-monospace, monospace; letter-spacing: 1px; }
+.instruments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.explanation { margin: 10px 0 0; font-size: 12px; color: #94a3b8; }
+.score-panel { background: #10121a; border: 1px solid #263044; border-radius: 6px; padding: 16px; }
+.score-heading { display: flex; justify-content: space-between; align-items: center; font: 11px ui-monospace, monospace; color: #94a3b8; }
+.score-heading strong { font-size: 20px; }
+.score-track { position: relative; height: 10px; background: #263044; margin: 16px 0; border-radius: 4px; }
+.score-fill { height: 100%; border-radius: 4px; transition: width 0.1s linear; }
+.threshold-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #f87171; }
+.score-details { display: flex; flex-direction: column; gap: 4px; font: 10px ui-monospace, monospace; color: #94a3b8; }
+@media (max-width: 1000px) { .dashboard { grid-template-columns: 360px minmax(0, 1fr); padding: 16px; gap: 12px; } }
+@media (max-width: 760px) {
+  .dashboard { grid-template-columns: minmax(0, 1fr); }
+  .top-bar { padding: 16px; }
+  .brand { font-size: 17px; }
+  .demo-notice { padding: 10px 16px; font-size: 10px; }
+  .alert-banner:empty { display: none; }
 }
+@media (prefers-reduced-motion: reduce) { .score-fill { transition: none; } }
 
-/* Base page styles */
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased; /* smoother text on Mac */
-}
+.charts, .chart-placeholder { padding: 16px 12px; background: #10121a; border: 1px solid #263044; border-radius: 6px; }
+.chart-placeholder { min-height: 630px; display: grid; place-items: center; color: #94a3b8; }
+.chart-label { padding-left: 46px; font: 10px ui-monospace, monospace; text-transform: uppercase; color: #94a3b8; }
+.chart-tooltip { display: flex; flex-direction: column; padding: 8px 12px; background: #161923; border: 1px solid #475569; border-radius: 4px; font: 12px ui-monospace, monospace; }
+.chart-tooltip span { color: #94a3b8; }
+.chart-tooltip strong { color: #f59e0b; padding-top: 4px; }
 
-/* Recharts tooltip customisation */
-.recharts-tooltip-wrapper {
-  outline: none;
-}
+.project-navigation { display:flex; flex-wrap:wrap; gap:8px; }
+.project-navigation a { color:#67e8f9; border:1px solid #263044; padding:6px 10px; border-radius:4px; text-decoration:none; font-size:12px; }
+.project-navigation a[aria-current="page"] { color:#f59e0b; border-color:#f59e0b; }
+
+.replay-controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 24px; color:#94a3b8; font-size:12px; border-bottom:1px solid #263044; }
+.replay-controls button { background:#1e293b; border:1px solid #475569; color:#e2e8f0; border-radius:4px; padding:6px 12px; cursor:pointer; }
+.replay-controls button:disabled { opacity:.5; cursor:default; }

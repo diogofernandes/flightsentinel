@@ -1,159 +1,52 @@
-// LiveChart.jsx
-//
-// Four stacked real-time charts showing the last 30 seconds
-// of telemetry. Built with Recharts.
-//
-// RECHARTS BASICS:
-//   <ResponsiveContainer> — makes chart fill its parent div
-//   <LineChart>           — the chart type (line graph)
-//   <XAxis> / <YAxis>    — the axes
-//   <Line>               — one line on the chart
-//   <ReferenceLine>       — a horizontal threshold line
-//   <Tooltip>             — popup on hover
-//
-// PROPS:
-//   history   array   — array of telemetry frames (last 300)
-
 import React from 'react'
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ReferenceLine,
+  CartesianGrid, Line, LineChart, ReferenceLine,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 
-// Chart configuration — one entry per sub-chart
-// This array drives the rendering loop below.
 const CHARTS = [
-  {
-    key:    'altitude',
-    label:  'Altitude (ft)',
-    colour: '#22d3ee',      // cyan
-    domain: [6000, 10000],
-  },
-  {
-    key:    'airspeed',
-    label:  'Airspeed (kts)',
-    colour: '#f59e0b',      // amber
-    domain: [50, 160],
-    // Reference line at 65 kts — stall speed
-    refLine: { value: 65, label: 'Vs', colour: '#ef4444' },
-  },
-  {
-    key:    'pitch',
-    label:  'Pitch (°)',
-    colour: '#a78bfa',      // purple
-    domain: [-20, 20],
-    refLine: { value: 0, label: '', colour: '#334155' },
-  },
-  {
-    key:    'score',
-    label:  'Anomaly Score',
-    colour: '#22c55e',      // green (overridden dynamically)
-    domain: [0, 1],
-    refLine: { value: 0.65, label: '0.65', colour: '#ef4444' },
-  },
+  { key: 'altitude', label: 'Altitude (ft)', colour: '#22d3ee',
+    domain: ([low, high]) => [Math.floor(low - 50), Math.ceil(high + 50)] },
+  { key: 'airspeed', label: 'Airspeed (kt)', colour: '#f59e0b', domain: [50, 160],
+    reference: { value: 85, label: 'Benchmark rule: 85 kt' } },
+  { key: 'pitch', label: 'Pitch (deg)', colour: '#a78bfa', domain: [-20, 20] },
+  { key: 'score', label: 'Relative anomaly score', colour: '#22c55e', domain: [0, 1] },
 ]
 
-// Custom tooltip — shown on hover
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload || !payload.length) return null
-  const val = payload[0]?.value
+function FrameTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
   return (
-    <div style={tooltipStyle}>
-      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#f59e0b' }}>
-        {val != null ? val.toFixed(2) : '---'}
-      </span>
+    <div className="chart-tooltip">
+      <span>{Number.isFinite(label) ? label.toFixed(1) + 's' : ''}</span>
+      <strong>{Number.isFinite(payload[0].value) ? payload[0].value.toFixed(2) : '---'}</strong>
     </div>
   )
 }
 
-const tooltipStyle = {
-  backgroundColor: '#161923',
-  border:          '1px solid #1e2333',
-  borderRadius:    '4px',
-  padding:         '4px 10px',
-}
-
-export default function LiveChart({ history }) {
-  // If no data yet, show placeholder
-  if (!history || history.length === 0) {
-    return (
-      <div style={styles.placeholder}>
-        <span style={styles.placeholderText}>Waiting for telemetry...</span>
-      </div>
-    )
-  }
-
+export default function LiveChart({ history, threshold }) {
+  if (!history?.length) return <div className="chart-placeholder">Waiting for fresh telemetry…</div>
   return (
-    <div style={styles.container}>
-      {/* Render one chart per entry in CHARTS array */}
-      {CHARTS.map((chart, idx) => {
-        const isLast = idx === CHARTS.length - 1
-
+    <div className="charts">
+      {CHARTS.map((chart, index) => {
+        const reference = chart.key === 'score' && Number.isFinite(threshold)
+          ? { value: threshold, label: 'Threshold ' + threshold.toFixed(3) } : chart.reference
         return (
-          <div key={chart.key} style={{
-            ...styles.chartWrapper,
-            // Only the last chart shows the X axis
-            marginBottom: isLast ? 0 : 4,
-          }}>
-            {/* Chart label */}
-            <div style={styles.chartLabel}>{chart.label}</div>
-
-            {/* The actual Recharts chart */}
-            <ResponsiveContainer width="100%" height={isLast ? 80 : 75}>
-              <LineChart
-                data={history}
-                margin={{ top: 2, right: 8, bottom: 2, left: 0 }}
-              >
-                {/* Y axis — left side, no labels to save space */}
-                <YAxis
-                  domain={chart.domain}
-                  tick={{ fill: '#64748b', fontSize: 9, fontFamily: 'JetBrains Mono, monospace' }}
-                  width={36}
-                  tickCount={3}
-                />
-
-                {/* X axis — only on the last chart */}
-                {isLast && (
-                  <XAxis
-                    dataKey="timestamp"
-                    tick={{ fill: '#64748b', fontSize: 9 }}
-                    tickFormatter={(v) => `${v.toFixed(0)}s`}
-                    tickCount={6}
-                  />
-                )}
-
-                {/* Horizontal reference line (stall speed, threshold, etc.) */}
-                {chart.refLine && (
-                  <ReferenceLine
-                    y={chart.refLine.value}
-                    stroke={chart.refLine.colour}
-                    strokeDasharray="4 4"
-                    label={{
-                      value:    chart.refLine.label,
-                      fill:     chart.refLine.colour,
-                      fontSize: 9,
-                      position: 'insideTopLeft',
-                    }}
-                  />
-                )}
-
-                {/* Tooltip on hover */}
-                <Tooltip content={<CustomTooltip />} />
-
-                {/* The data line */}
-                <Line
-                  type="monotone"
-                  dataKey={chart.key}
-                  stroke={chart.colour}
-                  strokeWidth={1.5}
-                  dot={false}          // no dots — too cluttered at 10 Hz
-                  isAnimationActive={false}  // disable animation — hurts perf at 10 Hz
-                />
+          <div className="chart" key={chart.key}>
+            <div className="chart-label">{chart.label}</div>
+            <ResponsiveContainer width="100%" height={index === CHARTS.length - 1 ? 145 : 130}>
+              <LineChart data={history} margin={{ top: 10, right: 12, bottom: 2, left: 0 }}>
+                <CartesianGrid stroke="#1e293b" vertical={false} />
+                <YAxis domain={chart.domain} width={46} tickCount={3}
+                  tick={{ fill: '#94a3b8', fontSize: 10 }}
+                  tickFormatter={value => chart.key === 'altitude' ? Math.round(value).toLocaleString() : chart.key === 'score' ? value.toFixed(1) : Math.round(value)} />
+                <XAxis dataKey="timestamp" type="number" domain={['dataMin', 'dataMax']}
+                  hide={index !== CHARTS.length - 1} tickCount={6}
+                  tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={value => value.toFixed(1) + 's'} />
+                {reference && <ReferenceLine y={reference.value} stroke="#f87171" strokeDasharray="4 4"
+                  label={{ value: reference.label, fill: '#f87171', fontSize: 10, position: 'insideTopLeft' }} />}
+                <Tooltip content={<FrameTooltip />} />
+                <Line type="linear" dataKey={chart.key} stroke={chart.colour}
+                  strokeWidth={1.5} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -161,45 +54,4 @@ export default function LiveChart({ history }) {
       })}
     </div>
   )
-}
-
-const styles = {
-  container: {
-    display:       'flex',
-    flexDirection: 'column',
-    gap:           '2px',
-    padding:       '12px',
-    backgroundColor: '#10121a',
-    border:        '1px solid #1e2333',
-    borderRadius:  '6px',
-    height:        '100%',
-  },
-  chartWrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  chartLabel: {
-    fontFamily:    'JetBrains Mono, monospace',
-    fontSize:      '9px',
-    color:         '#64748b',
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    marginBottom:  '2px',
-    marginLeft:    '38px',
-  },
-  placeholder: {
-    display:        'flex',
-    alignItems:     'center',
-    justifyContent: 'center',
-    height:         '100%',
-    backgroundColor: '#10121a',
-    border:         '1px solid #1e2333',
-    borderRadius:   '6px',
-  },
-  placeholderText: {
-    fontFamily: 'JetBrains Mono, monospace',
-    fontSize:   '12px',
-    color:      '#334155',
-    letterSpacing: '1px',
-  },
 }

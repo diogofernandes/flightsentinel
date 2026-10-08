@@ -1,857 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlightSentinel | Diogo Fernandes</title>
-  <meta name="description" content="Real-time flight anomaly detection. PySide6, PyTorch, live telemetry." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A measured synthetic telemetry experiment with React, FastAPI and Isolation Forest.">
+  <title>FlightSentinel · Diogo Fernandes</title>
   <style>
-    /* ── Reset ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ── Tokens ── */
-    :root {
-      --bg:        #0b0c0f;
-      --bg2:       #10121a;
-      --bg3:       #161923;
-      --border:    #1e2333;
-      --amber:     #f59e0b;
-      --amber-dim: #92610a;
-      --cyan:      #22d3ee;
-      --red:       #ef4444;
-      --green:     #22c55e;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --subtle:    #334155;
-      --mono:      'JetBrains Mono', monospace;
-      --display:   'Syne', sans-serif;
-      --body:      'Inter', sans-serif;
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--body);
-      font-size: 16px;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── Layout ── */
-    .wrap {
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    /* ── Nav ── */
-    nav {
-      padding: 24px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    nav .wrap {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .nav-logo {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: .05em;
-    }
-    .nav-logo span { color: var(--amber); }
-    .nav-links {
-      display: flex;
-      gap: 28px;
-      list-style: none;
-    }
-    .nav-links a {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: .04em;
-      transition: color .2s;
-    }
-    .nav-links a:hover { color: var(--text); }
-
-    /* ── Hero ── */
-    .hero {
-      padding: 96px 0 72px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .eyebrow {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: .14em;
-      color: var(--amber);
-      text-transform: uppercase;
-      margin-bottom: 24px;
-    }
-
-    h1 {
-      font-family: var(--display);
-      font-size: clamp(44px, 8vw, 72px);
-      font-weight: 800;
-      line-height: 1.0;
-      letter-spacing: -.02em;
-      color: var(--text);
-      margin-bottom: 28px;
-    }
-
-    h1 .accent { color: var(--amber); }
-
-    .hero-sub {
-      font-size: 18px;
-      color: var(--muted);
-      max-width: 560px;
-      line-height: 1.65;
-      margin-bottom: 40px;
-    }
-
-    /* ── Telemetry ticker (signature element) ── */
-    .ticker-wrap {
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--bg2);
-      padding: 16px 20px;
-      margin-bottom: 40px;
-      position: relative;
-    }
-    .ticker-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    .ticker-row {
-      display: flex;
-      gap: 32px;
-      flex-wrap: wrap;
-    }
-    .ticker-item { display: flex; flex-direction: column; gap: 3px; }
-    .ticker-param {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .1em;
-    }
-    .ticker-val {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 500;
-      color: var(--amber);
-      letter-spacing: .02em;
-      transition: color .3s;
-    }
-    .ticker-val.warn { color: var(--red); }
-    .ticker-unit {
-      font-family: var(--mono);
-      font-size: 9px;
-      color: var(--subtle);
-      letter-spacing: .1em;
-    }
-    .ticker-status {
-      position: absolute;
-      top: 16px; right: 20px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: .08em;
-    }
-    .ticker-status.ok  { color: var(--green); }
-    .ticker-status.bad { color: var(--red); animation: blink 1s step-start infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-
-    /* score bar */
-    .score-row {
-      margin-top: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .score-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .1em;
-      white-space: nowrap;
-    }
-    .score-track {
-      flex: 1;
-      height: 4px;
-      background: var(--bg3);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .score-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 2px;
-      background: var(--green);
-      transition: width .4s ease, background .4s ease;
-    }
-    .score-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      width: 40px;
-      text-align: right;
-    }
-
-    /* ── Tags ── */
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      color: var(--muted);
-      letter-spacing: .05em;
-    }
-    .tag.hl { border-color: var(--amber-dim); color: var(--amber); }
-
-    /* ── Sections ── */
-    section {
-      padding: 72px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    h2 {
-      font-family: var(--display);
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -.01em;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
-    h3 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-    }
-
-    p {
-      color: var(--muted);
-      margin-bottom: 16px;
-      font-size: 15px;
-    }
-    p:last-child { margin-bottom: 0; }
-
-    /* ── Problem section ── */
-    .problem-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 32px;
-    }
-    .problem-cell {
-      background: var(--bg2);
-      padding: 24px;
-    }
-    .problem-cell .label {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .problem-cell p { font-size: 14px; margin: 0; }
-
-    /* ── Architecture ── */
-    .arch-block {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 28px;
-      margin-top: 32px;
-    }
-    .arch-code {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 2;
-      white-space: pre;
-      overflow-x: auto;
-    }
-    .arch-code .hi  { color: var(--cyan); }
-    .arch-code .hi2 { color: var(--amber); }
-    .arch-code .hi3 { color: var(--green); }
-    .arch-code .dim { color: var(--subtle); }
-
-    /* ── How it works steps ── */
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 32px;
-    }
-    .step {
-      display: flex;
-      gap: 24px;
-      background: var(--bg2);
-      padding: 24px 28px;
-      align-items: flex-start;
-      transition: background .2s;
-    }
-    .step:hover { background: var(--bg3); }
-    .step-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--amber);
-      letter-spacing: .05em;
-      padding-top: 2px;
-      flex-shrink: 0;
-      width: 28px;
-    }
-    .step-content h3 { margin-bottom: 4px; font-size: 14px; }
-    .step-content p  { font-size: 13px; margin: 0; }
-
-    /* ── V-cycle table ── */
-    .vtable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 32px;
-      font-size: 13px;
-    }
-    .vtable th {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 16px;
-      text-align: left;
-    }
-    .vtable td {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      color: var(--muted);
-      vertical-align: top;
-    }
-    .vtable td:first-child { color: var(--text); font-weight: 500; }
-    .vtable tr:last-child td { border-bottom: none; }
-    .vtable tr:hover td { background: var(--bg2); }
-    .mono-sm { font-family: var(--mono); font-size: 11px; color: var(--cyan); }
-
-    /* ── Stack grid ── */
-    .stack-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 32px;
-    }
-    .stack-cell {
-      background: var(--bg2);
-      padding: 20px 22px;
-      transition: background .2s;
-    }
-    .stack-cell:hover { background: var(--bg3); }
-    .stack-cell .layer {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .stack-cell .tech {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .stack-cell .why {
-      font-size: 12px;
-      color: var(--subtle);
-      line-height: 1.5;
-    }
-
-    /* ── TCP section ── */
-    .code-block {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 20px 24px;
-      margin-top: 20px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.9;
-      overflow-x: auto;
-    }
-    .code-block .c-green  { color: var(--green); }
-    .code-block .c-amber  { color: var(--amber); }
-    .code-block .c-cyan   { color: var(--cyan); }
-    .code-block .c-dim    { color: var(--subtle); }
-
-    /* ── Contact ── */
-    .contact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 32px;
-    }
-    .contact-cell {
-      background: var(--bg2);
-      padding: 20px 24px;
-    }
-    .contact-cell .clabel {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .contact-cell a {
-      color: var(--text);
-      text-decoration: none;
-      font-size: 14px;
-      transition: color .2s;
-    }
-    .contact-cell a:hover { color: var(--amber); }
-
-    /* ── Footer ── */
-    footer {
-      padding: 40px 0;
-      text-align: center;
-    }
-    footer p {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--subtle);
-      letter-spacing: .06em;
-      margin: 0;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      .problem-grid  { grid-template-columns: 1fr; }
-      .stack-grid    { grid-template-columns: 1fr 1fr; }
-      .contact-grid  { grid-template-columns: 1fr; }
-      .ticker-row    { gap: 20px; }
-      .arch-code     { font-size: 10px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { animation: none !important; transition: none !important; }
-    }
+    :root { color-scheme:dark; --bg:#0b0c0f; --panel:#10121a; --border:#263044; --text:#e2e8f0; --muted:#94a3b8; --amber:#f59e0b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.75 system-ui,sans-serif; }
+    .wrap { max-width:1000px; margin:auto; padding:0 24px; }
+    nav { border-bottom:1px solid var(--border); padding:20px 0; }
+    nav .wrap { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    a { color:#67e8f9; text-underline-offset:4px; }
+    a:focus-visible,button:focus-visible { outline:2px solid #67e8f9; outline-offset:4px; }
+    .logo { color:var(--amber); font:700 14px ui-monospace,monospace; letter-spacing:2px; }
+    .page-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-top:24px; } .page-tabs a { padding:8px 16px; border:1px solid var(--border); border-radius:6px; text-decoration:none; } .page-tabs a[aria-current="page"] { color:var(--amber); border-color:var(--amber); }
+    .hero { padding:80px 0 40px; }
+    .eyebrow { color:var(--amber); font:12px ui-monospace,monospace; letter-spacing:2px; text-transform:uppercase; }
+    h1 { font-size:clamp(40px,8vw,76px); line-height:1.05; letter-spacing:-3px; margin:24px 0; }
+    h1 span { color:var(--amber); }
+    h2 { font-size:26px; line-height:1.3; margin:0 0 16px; }
+    h3 { font-size:17px; margin:0 0 12px; }
+    .intro { font-size:20px; color:var(--muted); max-width:740px; }
+    .tags { display:flex; flex-wrap:wrap; gap:10px; margin:28px 0; }
+    .tag { border:1px solid var(--border); border-radius:4px; padding:4px 10px; color:var(--muted); font:12px ui-monospace,monospace; }
+    section { padding:40px 0; border-top:1px solid var(--border); }
+    p { margin:0 0 16px; }
+    .muted { color:var(--muted); }
+    .recording { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:24px; margin:32px 0; }
+    .recording-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .recording-label { color:var(--muted); font:11px ui-monospace,monospace; }
+    .instruments { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:24px 0; }
+    .instrument small { display:block; color:var(--muted); font:11px ui-monospace,monospace; }
+    .instrument strong { display:block; color:var(--amber); font:clamp(16px,3vw,28px) ui-monospace,monospace; margin:8px 0; }
+    .track { height:8px; background:var(--border); border-radius:4px; position:relative; margin:20px 0 12px; }
+    .fill { height:100%; width:0; background:#22c55e; border-radius:4px; }
+    .marker { position:absolute; width:2px; top:-4px; bottom:-4px; background:#f87171; display:none; }
+    button { background:#1e293b; color:var(--text); border:1px solid #475569; border-radius:4px; padding:6px 14px; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:default; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:24px; }
+    pre { overflow:auto; background:var(--panel); border:1px solid var(--border); padding:24px; font:13px/1.8 ui-monospace,monospace; }
+    code { font:13px ui-monospace,monospace; color:#67e8f9; }
+    .table-scroll { overflow:auto; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th,td { padding:12px; text-align:left; border-bottom:1px solid var(--border); }
+    th { color:var(--muted); font-weight:500; }
+    .notice { border-left:3px solid var(--amber); padding-left:16px; color:var(--muted); }
+    .screenshot { width:100%; border:1px solid var(--border); border-radius:6px; }
+    footer { padding:32px 0; color:var(--muted); border-top:1px solid var(--border); font-size:13px; }
+    @media(max-width:640px) { .hero { padding-top:48px; } .wrap { padding:0 16px; } .grid { grid-template-columns:1fr; } .instruments { grid-template-columns:repeat(3,minmax(0,1fr)); } .recording { padding:16px; } }
   </style>
 </head>
 <body>
-
-<!-- ── Nav ── -->
-<nav>
-  <div class="wrap">
-    <span class="nav-logo">✈ <span>diogo fernandes</span></span>
-    <ul class="nav-links">
-      <li><a href="#how">How it works</a></li>
-      <li><a href="#arch">Architecture</a></li>
-      <li><a href="#vcycle">V-cycle</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </div>
-</nav>
-
-<!-- ── Hero ── -->
-<div class="hero">
-  <div class="wrap">
-    <p class="eyebrow">Simulation &amp; Demonstrators · Portfolio Project</p>
-    <h1>Flight<span class="accent">Sentinel</span></h1>
-    <p class="hero-sub">
-      Real-time flight anomaly detection. A PySide6 instrument panel that ingests live flight telemetry at 10 Hz, scores each frame with a PyTorch model, and fires alerts when the aircraft deviates from normal envelope.
-    </p>
-
-    <!-- Signature element: live-animated telemetry ticker -->
-    <div class="ticker-wrap">
-      <div class="ticker-label">Live telemetry feed · simulated</div>
-      <div class="ticker-row">
-        <div class="ticker-item">
-          <span class="ticker-param">ALT</span>
-          <span class="ticker-val" id="t-alt">8 042</span>
-          <span class="ticker-unit">FT</span>
+  <nav><div class="wrap"><span class="logo">FLIGHTSENTINEL</span><div><a href="about.html">Project explained</a> · <a href="#evidence">Results</a> · <a href="#run">Run it</a> · <a href="https://github.com/diogofernandes/flightsentinel">Source</a></div></div></nav>
+  <main class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Synthetic telemetry · Portfolio experiment</p>
+      <h1>Flight<span>Sentinel</span></h1>
+      <p class="intro">A shared telemetry stream, an anomaly model, and a cockpit-inspired dashboard. Built to explore calibration, real-time delivery, and the limits of a simple detector.</p>
+      <div class="tags"><span class="tag">React</span><span class="tag">FastAPI / WebSockets</span><span class="tag">scikit-learn</span><span class="tag">Seeded evaluation</span></div>
+      <p class="notice">Generated signals only. This is not avionics, a validated stall detector, or software for operational flight decisions.</p>
+      <nav class="page-tabs" aria-label="Project pages"><a href="/">Live dashboard</a><a href="index.html" aria-current="page">Demo &amp; results</a><a href="about.html">Project explained</a></nav>
+      <div class="recording">
+        <div class="recording-head"><span class="recording-label">RECORDED SYNTHETIC RUN · MODEL-SCORED REPLAY</span><button id="pause" disabled>Pause replay</button></div>
+        <p class="muted" id="recording-info" style="font-size:12px;margin-top:12px">Loading recorded data…</p>
+        <div class="instruments">
+          <div class="instrument"><small>ALT · FT</small><strong id="altitude">---</strong></div>
+          <div class="instrument"><small>IAS · KT</small><strong id="airspeed">---</strong></div>
+          <div class="instrument"><small>PITCH · DEG</small><strong id="pitch">---</strong></div>
+          <div class="instrument"><small>ROLL · DEG</small><strong id="roll">---</strong></div>
+          <div class="instrument"><small>VSI · FT/MIN</small><strong id="vsi">---</strong></div>
         </div>
-        <div class="ticker-item">
-          <span class="ticker-param">IAS</span>
-          <span class="ticker-val" id="t-ias">118.3</span>
-          <span class="ticker-unit">KTS</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-param">PITCH</span>
-          <span class="ticker-val" id="t-pitch">+1.2</span>
-          <span class="ticker-unit">DEG</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-param">ROLL</span>
-          <span class="ticker-val" id="t-roll">−3.5</span>
-          <span class="ticker-unit">DEG</span>
-        </div>
-        <div class="ticker-item">
-          <span class="ticker-param">VSI</span>
-          <span class="ticker-val" id="t-vsi">+45</span>
-          <span class="ticker-unit">FPM</span>
-        </div>
-      </div>
-      <div class="score-row">
-        <span class="score-label">ANOMALY SCORE</span>
-        <div class="score-track"><div class="score-fill" id="score-fill"></div></div>
-        <span class="score-num" id="score-num">0.000</span>
-      </div>
-      <span class="ticker-status ok" id="ticker-status">● NORMAL</span>
-    </div>
-
-    <div class="tags">
-      <span class="tag hl">PySide6 · Qt</span>
-      <span class="tag hl">PyTorch</span>
-      <span class="tag hl">React (extensions)</span>
-      <span class="tag">scikit-learn</span>
-      <span class="tag">QThread</span>
-      <span class="tag">TCP bridge</span>
-      <span class="tag">V-cycle</span>
-      <span class="tag">pytest</span>
-    </div>
-  </div>
-</div>
-
-<!-- ── Problem ── -->
-<section>
-  <div class="wrap">
-    <h2>The problem</h2>
-    <p>
-      A stall approach has a distinct multi-parameter signature: airspeed drops, pitch rises, vertical speed goes sharply negative, all simultaneously. No single parameter threshold catches it reliably. You need to model the normal flight envelope as a whole and flag deviations from it.
-    </p>
-    <div class="problem-grid">
-      <div class="problem-cell">
-        <div class="label">Without FlightSentinel</div>
-        <p>Static per-parameter thresholds. Miss correlated anomalies. False positives in turbulence. No audit trail of events.</p>
-      </div>
-      <div class="problem-cell">
-        <div class="label">With FlightSentinel</div>
-        <p>ML model scores the joint distribution at 10 Hz. Alerts only on genuine envelope deviation. Every event logged with full parameter context.</p>
+        <div class="track"><div class="fill" id="fill"></div><div class="marker" id="marker"></div></div>
+        <p id="score" class="recording-label">NO CURRENT SCORE</p>
+        <p id="replay-status" class="recording-label" role="status"></p>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- ── How it works ── -->
-<section id="how">
-  <div class="wrap">
-    <h2>How it works</h2>
-    <p>Four stages. Nothing reaches the alert log until it passes through all of them.</p>
-    <div class="steps">
-      <div class="step">
-        <span class="step-num">01</span>
-        <div class="step-content">
-          <h3>Stream</h3>
-          <p>A telemetry simulator generates realistic GA aircraft parameters at 10 Hz (altitude, airspeed, pitch, roll, vertical speed) with smooth sinusoidal drift and realistic noise. Every 30 seconds it injects a synthetic stall to exercise the detector. The TCP bridge on port 54399 replaces the simulator with real external data.</p>
-        </div>
+    <section>
+      <h2>The engineering problem</h2>
+      <p class="muted">An attractive dashboard does not make an anomaly detector useful. The important questions are how often it raises false alarms, what it misses, and whether multiple viewers see the same stream.</p>
+      <div class="grid">
+        <div class="card"><h3>One producer, many viewers</h3><p class="muted">A paced server task generates and scores each frame once. Bounded subscriber queues prevent slow clients from building a backlog. Opening another browser does not change simulation speed.</p></div>
+        <div class="card"><h3>Measured calibration</h3><p class="muted">The threshold is the 99.5th percentile of separate normal calibration data. Test seeds do not select it. Three high frames confirm an alert; five low frames and hysteresis clear it.</p></div>
       </div>
-      <div class="step">
-        <span class="step-num">02</span>
-        <div class="step-content">
-          <h3>Score</h3>
-          <p>Each frame is scored by an Isolation Forest trained exclusively on normal cruise data. The algorithm learns the joint distribution of all five parameters. Anomalies are frames that are "hard to isolate" from the rest. The model is wrapped in a PyTorch <code style="font-family:var(--mono);font-size:12px;color:var(--cyan)">nn.Module</code> for consistent serialisation and an easy upgrade path to a sequence model.</p>
-        </div>
-      </div>
-      <div class="step">
-        <span class="step-num">03</span>
-        <div class="step-content">
-          <h3>Threshold</h3>
-          <p>Scores above 0.65 trigger an alert, logged on the rising edge only, so a sustained anomaly produces one event, not hundreds. The threshold is a single value in <code style="font-family:var(--mono);font-size:12px;color:var(--cyan)">params.py</code> and tunable without touching any other file.</p>
-        </div>
-      </div>
-      <div class="step">
-        <span class="step-num">04</span>
-        <div class="step-content">
-          <h3>Display</h3>
-          <p>A PySide6 window renders amber instrument readouts, a live four-panel pyqtgraph chart, a colour-coded score bar, and a scrollable alert log table. All UI updates happen on the main thread via Qt signals; inference runs in a <code style="font-family:var(--mono);font-size:12px;color:var(--cyan)">QThread</code> so the event loop is never blocked.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Architecture ── -->
-<section id="arch">
-  <div class="wrap">
-    <h2>Architecture</h2>
-    <p>
-      The critical design decision is thread separation. Qt has one rule: never block the main thread. Inference on the main thread causes UI freezes, which is unacceptable at 10 Hz. The solution is a <code style="font-family:var(--mono);font-size:12px;color:var(--cyan)">QThread</code> worker that runs the simulator and model, then emits a Qt Signal per frame. The main thread catches it and updates every widget in one pass.
-    </p>
-    <div class="arch-block">
-      <pre class="arch-code"><span class="hi">QMainWindow</span>  (main thread, UI only)
-  ├── InstrumentReadouts   <span class="dim">← amber numeric displays</span>
-  ├── AnomalyScoreBar      <span class="dim">← colour-coded 0–1 gauge</span>
-  ├── pyqtgraph charts     <span class="dim">← 4-panel live telemetry</span>
-  └── AlertLogPanel        <span class="dim">← QTableWidget event log</span>
-         ▲
-         │  <span class="hi2">Signal (frame_ready)</span>   <span class="dim">← Qt thread-safe channel</span>
-         │
-<span class="hi">TelemetryWorker</span>  (QThread, never touches UI)
-  ├── TelemetrySimulator   <span class="dim">← 10 Hz stream + anomaly injection</span>
-  └── AnomalyDetector      <span class="dim">← IsolationForest in PyTorch nn.Module</span>
-         ▲
-         │  optional
-<span class="hi3">TCPTelemetryReceiver</span>  (daemon thread, port 54399)
-  └── JSON frames from any external source</pre>
-    </div>
-
-    <div class="stack-grid" style="margin-top: 24px;">
-      <div class="stack-cell">
-        <div class="layer">GUI</div>
-        <div class="tech">PySide6</div>
-        <div class="why">Official Qt Python bindings. Same API as Qt C++, with a direct migration path to native.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="layer">Charts</div>
-        <div class="tech">pyqtgraph</div>
-        <div class="why">Hardware-accelerated. Designed for real-time data at high update rates inside Qt.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="layer">ML model</div>
-        <div class="tech">Isolation Forest</div>
-        <div class="why">Unsupervised. Trains on normal data only. No labelled anomaly examples needed.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="layer">Serialisation</div>
-        <div class="tech">PyTorch .pt</div>
-        <div class="why">Consistent format. Easy swap to LSTM Autoencoder without changing the inference API.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="layer">IPC</div>
-        <div class="tech">TCP · port 54399</div>
-        <div class="why">Language-agnostic. Any process (C++, Rust, real avionics) can pipe JSON telemetry in.</div>
-      </div>
-      <div class="stack-cell">
-        <div class="layer">Tests</div>
-        <div class="tech">pytest · 7 tests</div>
-        <div class="why">Each test maps to a stated requirement. V-cycle verification at component level.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── V-cycle ── -->
-<section id="vcycle">
-  <div class="wrap">
-    <h2>V-cycle mapping</h2>
-    <p>
-      DO-178C certified software requires every requirement to be verified by a test. FlightSentinel applies this principle at demonstrator scale: each design decision traces to a stated requirement and a corresponding test.
-    </p>
-    <table class="vtable">
-      <thead>
-        <tr>
-          <th>Requirement</th>
-          <th>Implementation</th>
-          <th>Verification</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Score must be in [0, 1]</td>
-          <td>Clipped normalisation in model wrapper</td>
-          <td><span class="mono-sm">test_model_scores_in_range()</span></td>
-        </tr>
-        <tr>
-          <td>Anomaly score &gt; normal score</td>
-          <td>Isolation Forest trained on normal data only</td>
-          <td><span class="mono-sm">assert score_anomaly &gt; score_normal</span></td>
-        </tr>
-        <tr>
-          <td>UI must not freeze at 10 Hz</td>
-          <td>QThread separation, Signal emission</td>
-          <td>Event loop stays responsive under load</td>
-        </tr>
-        <tr>
-          <td>Alerts on rising edge only</td>
-          <td><span class="mono-sm">last_was_anomaly</span> guard flag</td>
-          <td>Alert log shows one row per event, not per frame</td>
-        </tr>
-        <tr>
-          <td>Anomaly frame differs from normal</td>
-          <td>Stall injector in simulator</td>
-          <td><span class="mono-sm">test_anomaly_frame_differs_from_normal()</span></td>
-        </tr>
-        <tr>
-          <td>External data replaces simulator</td>
-          <td>TCPTelemetryReceiver on port 54399</td>
-          <td>JSON frames pipe in cleanly from nc / Python</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ── TCP bridge ── -->
-<section>
-  <div class="wrap">
-    <h2>External telemetry via TCP</h2>
-    <p>
-      A TCP socket decouples the data source from the application. Swap the simulator for real avionics data, a HIL rig, or another process without changing a line of UI code.
-    </p>
-    <div class="code-block">
-<span class="c-dim"># Terminal 1: launch the cockpit UI</span>
-<span class="c-green">python</span> main.py
-
-<span class="c-dim"># Terminal 2: pipe a stall frame from any source</span>
-<span class="c-green">echo</span> <span class="c-amber">'{"altitude": 7200, "airspeed": 58, "pitch": 14, "roll": 22, "vsi": -1100}'</span> <span class="c-dim">\</span>
-  | nc 127.0.0.1 54399
-
-<span class="c-dim"># Or from Python</span>
-<span class="c-green">import</span> socket, json
-s = socket.create_connection((<span class="c-amber">"127.0.0.1"</span>, <span class="c-cyan">54399</span>))
-s.sendall((json.dumps(frame) + <span class="c-amber">"\n"</span>).encode())
-    </div>
-  </div>
-</section>
-
-<!-- ── Contact ── -->
-<section id="contact">
-  <div class="wrap">
-    <h2>Diogo Fernandes</h2>
-    <p>
-      VFX Compositor and AI/ML pipeline engineer. 13+ years in production VFX. Now building AI-powered tooling for complex technical domains and applying that engineering foundation to simulation and safety-critical software.
-    </p>
-    <p>
-      Based in Lisbon. Open to on-site collaboration.
-    </p>
-    <div class="contact-grid">
-      <div class="contact-cell">
-        <div class="clabel">Email</div>
-        <a href="mailto:diogoantonio.f@gmail.com">diogoantonio.f@gmail.com</a>
-      </div>
-      <div class="contact-cell">
-        <div class="clabel">GitHub</div>
-        <a href="https://github.com/diogofernandes" target="_blank">github.com/diogofernandes</a>
-      </div>
-      <div class="contact-cell">
-        <div class="clabel">LinkedIn</div>
-        <a href="https://www.linkedin.com/in/diogo-fernandes-5221922a/" target="_blank">linkedin.com/in/diogo-fernandes</a>
-      </div>
-
-    </div>
-    <p style="margin-top: 24px; font-family: var(--mono); font-size: 12px; color: var(--subtle);">
-      Code is private. Full walkthrough available on request or in an interview.
-    </p>
-  </div>
-</section>
-
-<!-- ── Footer ── -->
-<footer>
-  <div class="wrap">
-    <p>FlightSentinel · PySide6 · PyTorch · scikit-learn &nbsp;·&nbsp; Lisbon, Portugal</p>
-  </div>
-</footer>
-
-<!-- ── Ticker animation ── -->
-<script>
-  // Simulate live telemetry in the hero ticker
-  let t = 0;
-  let anomalyTimer = 0;
-  let inAnomaly = false;
-  const ANOMALY_EVERY = 20; // seconds
-  const ANOMALY_DUR   = 4;
-  let nextAnomaly     = ANOMALY_EVERY;
-
-  function lerp(a, b, alpha) { return a + (b - a) * alpha; }
-  function noise(scale) { return (Math.random() - 0.5) * 2 * scale; }
-
-  function tick() {
-    t += 0.1;
-
-    if (!inAnomaly && t >= nextAnomaly) {
-      inAnomaly = true; anomalyTimer = 0;
-    }
-    if (inAnomaly) {
-      anomalyTimer += 0.1;
-      if (anomalyTimer >= ANOMALY_DUR) {
-        inAnomaly = false;
-        nextAnomaly = t + ANOMALY_EVERY;
+    </section>
+    <section>
+      <h2>The actual application</h2>
+      <p class="muted">A React dashboard shows six readouts, four charts, and confirmed events. Missing or stale telemetry is marked unavailable; the connection retries with backoff.</p>
+      <img class="screenshot" src="dashboard.png" alt="FlightSentinel React dashboard with synthetic telemetry, model score, event log, and live charts" loading="lazy">
+      <p class="muted" style="font-size:12px;margin-top:12px">The backend and dashboard run locally. The replay above is a saved, scored recording; it does not perform browser inference.</p>
+    </section>
+    <section id="evidence">
+      <h2>Results, including the weaknesses</h2>
+      <p class="muted">Training seed 42, calibration seed 43, and held-out test seeds 101–103. Test scenarios share the generator and nominal envelope with training. Different noise seeds are not independent flight data.</p>
+      <div id="results"><p class="muted">Loading measured results…</p></div>
+      <p class="notice">The model handles the combined descent deviation better than isolated bank or airspeed changes. Simple rules can be the stronger detector for obvious single-channel violations. No claim of universal ML superiority is made.</p>
+      <p><a href="evaluation.md">Full evaluation and limitations</a> · <a href="evaluation.json">Raw metrics</a> · <a href="demo-data.json">Recorded model output</a></p>
+    </section>
+    <section>
+      <h2>Architecture and verification</h2>
+      <pre>Seeded simulator
+  → Isolation Forest (background inference)
+  → Alert confirmation / server event IDs
+  → Bounded subscriber queues
+  → WebSocket
+  → Validated React state
+  → Instruments / charts / observed event log</pre>
+      <p class="muted">Monotonic deadlines target 10 Hz; they do not provide hard real-time guarantees. The health endpoint reports stream freshness and timing overruns. A single server worker owns a simulation. The dashboard repeats an explicitly identified 120-second session rather than simulating an endless descent.</p>
+      <p class="muted">Tests cover reproducibility, altitude/VSI consistency, calibration, shared streaming, disconnect cleanup, stale data, and reconnect disposal. GitHub Actions runs those checks and the frontend build. This is demonstrator verification, not certification.</p>
+    </section>
+    <section id="run">
+      <h2>Run and reproduce</h2>
+      <pre>python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cd frontend
+npm ci
+npm run build
+cd ..
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000</pre>
+      <p class="muted">Python 3.12 and Node.js 22.12+ (or 20.19+). Open localhost:8000. The model trains and calibrates at startup.</p>
+      <pre>python -m pytest tests -q
+python -m backend.evaluate --replay
+cd frontend
+npm test</pre>
+      <p class="muted">No real telemetry ingestion, persistent alert store, phase-aware detector, or aircraft-specific validation is implemented. Those are extensions, not existing features.</p>
+    </section>
+    <section>
+      <h2>Diogo Fernandes</h2>
+      <p class="muted">VFX Compositor and AI/ML Pipeline Engineer · Lisbon, Portugal</p>
+      <p><a href="https://github.com/diogofernandes">GitHub</a> · <a href="https://www.linkedin.com/in/diogo-fernandes-5221922a/">LinkedIn</a></p>
+    </section>
+  </main>
+  <footer><div class="wrap">FlightSentinel · Synthetic demonstrator · React / FastAPI / scikit-learn</div></footer>
+  <script>
+    const percent = n => (n * 100).toFixed(2) + '%';
+    async function loadResults() {
+      try {
+        const response = await fetch('evaluation.json');
+        if (!response.ok) throw new Error('Results unavailable');
+        const r = await response.json();
+        const box = document.getElementById('results');
+        box.replaceChildren();
+        const summary = document.createElement('p');
+        summary.className = 'muted';
+        summary.textContent = 'Normal-only holdout: ' + percent(r.normal_only.false_positive_rate) +
+          ' raw frame false positives; ' + r.normal_only.events + ' confirmed alerts in ' +
+          r.normal_only.frames + ' frames. Calibrated threshold: ' + r.threshold.toFixed(4) + '.';
+        box.append(summary);
+        const scroll = document.createElement('div');
+        scroll.className = 'table-scroll';
+        const table = document.createElement('table');
+        const header = table.insertRow();
+        ['Scenario / severity', 'ML frame recall', 'ML frame FPR', 'Rule recall', 'ML complete events'].forEach(label => {
+          const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
+        });
+        r.runs.forEach(run => {
+          const row = table.insertRow();
+          [run.scenario + ' / ' + run.severity, percent(run.model.recall),
+           percent(run.model.false_positive_rate), percent(run.baseline.recall),
+           run.model_events.detected_events + ' / ' + run.model_events.injected_events].forEach(value => {
+             row.insertCell().textContent = value;
+           });
+        });
+        scroll.append(table); box.append(scroll);
+        const detail = document.createElement('p');
+        detail.className = 'muted'; detail.style.fontSize = '12px';
+        detail.textContent = 'Raw frame metrics use the score threshold; events use confirmation and hysteresis. The rule baseline uses illustrative limits. Details and detection delays are in the full report.';
+        box.append(detail);
+      } catch {
+        document.getElementById('results').textContent = 'Results could not load. Use the full evaluation link below.';
       }
     }
-
-    let alt, ias, pitch, roll, vsi, score;
-
-    if (inAnomaly) {
-      const p = anomalyTimer / ANOMALY_DUR;
-      alt   = 8000 - 500 * p + noise(40);
-      ias   = 118  - 60  * p + noise(3);
-      pitch =        12  * p + noise(1);
-      roll  =        20  * Math.sin(p * Math.PI) + noise(2);
-      vsi   =      -1200 * p + noise(80);
-      score = Math.min(0.95, 0.3 + 0.65 * p + noise(0.03));
-    } else {
-      alt   = 8000 + 200 * Math.sin(t / 30) + noise(20);
-      ias   = 118  + 10  * Math.sin(t / 20) + noise(1.5);
-      pitch =         2  * Math.sin(t / 15) + noise(0.3);
-      roll  =         5  * Math.sin(t / 25) + noise(0.5);
-      vsi   =        50  * Math.sin(t / 30) + noise(15);
-      score = Math.max(0, 0.18 + 0.12 * Math.sin(t / 8) + noise(0.02));
+    async function loadReplay() {
+      const button = document.getElementById('pause');
+      try {
+        const response = await fetch('demo-data.json');
+        if (!response.ok) throw new Error('Replay unavailable');
+        const r = await response.json();
+        let index = 0, paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        button.disabled = false;
+        function updateButton() { button.textContent = paused ? 'Play replay' : 'Pause replay'; }
+        updateButton();
+        button.onclick = () => { paused = !paused; updateButton(); };
+        const marker = document.getElementById('marker');
+        marker.style.display = 'block'; marker.style.left = r.threshold * 100 + '%';
+        function render() {
+          const f = r.frames[index];
+          for (const key of ['altitude', 'airspeed', 'pitch', 'roll', 'vsi']) {
+            document.getElementById(key).textContent = ['altitude', 'vsi'].includes(key) ? Math.round(f[key]).toLocaleString() : f[key].toFixed(1);
+          }
+          const colour = f.alert ? '#ef4444' : f.score > r.threshold ? '#f59e0b' : '#22c55e';
+          document.getElementById('fill').style.width = f.score * 100 + '%';
+          document.getElementById('fill').style.background = colour;
+          document.getElementById('score').textContent = 'RELATIVE SCORE ' + f.score.toFixed(3) + ' · THRESHOLD ' + r.threshold.toFixed(3) + ' · NOT A PROBABILITY';
+          document.getElementById('recording-info').textContent = 'Seed ' + r.seed + ' · ' + f.timestamp.toFixed(1) + ' / 90 simulation seconds · Loops · Saved model output';
+          document.getElementById('replay-status').textContent = f.alert ? 'CONFIRMED MODEL ALERT' : 'NO CONFIRMED MODEL ALERT';
+          document.getElementById('replay-status').style.color = colour;
+        }
+        render();
+        setInterval(() => {
+          if (!paused && !document.hidden) { index = (index + 1) % r.frames.length; render(); }
+        }, 1000 / r.rate_hz);
+      } catch {
+        document.getElementById('recording-info').textContent = 'Recording unavailable. Serve this directory over HTTP; no fabricated fallback data is shown.';
+      }
     }
-
-    // update DOM
-    document.getElementById('t-alt').textContent   = Math.round(alt).toLocaleString();
-    document.getElementById('t-ias').textContent   = ias.toFixed(1);
-    document.getElementById('t-pitch').textContent = (pitch >= 0 ? '+' : '') + pitch.toFixed(1);
-    document.getElementById('t-roll').textContent  = (roll  >= 0 ? '+' : '') + roll.toFixed(1);
-    document.getElementById('t-vsi').textContent   = (vsi   >= 0 ? '+' : '') + Math.round(vsi);
-
-    const pct = Math.round(score * 100);
-    const fill = document.getElementById('score-fill');
-    fill.style.width = pct + '%';
-    fill.style.background = score < 0.4 ? '#22c55e' : score < 0.65 ? '#f59e0b' : '#ef4444';
-    document.getElementById('score-num').textContent = score.toFixed(3);
-
-    // colour ias red during stall
-    document.getElementById('t-ias').classList.toggle('warn', ias < 70);
-    document.getElementById('t-pitch').classList.toggle('warn', pitch > 8);
-
-    const status = document.getElementById('ticker-status');
-    if (score > 0.65) {
-      status.textContent = '⚠ ANOMALY DETECTED';
-      status.className = 'ticker-status bad';
-    } else {
-      status.textContent = '● NORMAL';
-      status.className = 'ticker-status ok';
-    }
-  }
-
-  setInterval(tick, 100);
-</script>
-
+    loadResults(); loadReplay();
+  </script>
 </body>
 </html>

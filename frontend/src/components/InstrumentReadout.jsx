@@ -1,22 +1,3 @@
-// InstrumentReadout.jsx
-//
-// A single cockpit instrument — shows one flight parameter.
-// Looks like this:
-//
-//   ALT
-//  8 042
-//    FT
-//
-// Turns red if the value goes outside the warning range.
-//
-// PROPS:
-//   label     string   — parameter name (e.g. "ALT")
-//   value     number   — current value
-//   unit      string   — unit label (e.g. "FT")
-//   format    function — how to format the number (e.g. x => x.toFixed(1))
-//   warnAbove number   — value above which to show red (optional)
-//   warnBelow number   — value below which to show red (optional)
-
 import React from 'react'
 
 export default function InstrumentReadout({
@@ -64,8 +45,8 @@ const styles = {
     backgroundColor: '#0f1117',
     border:          '1px solid #1e2333',
     borderRadius:    '6px',
-    padding:         '12px 16px',
-    minWidth:        '110px',
+    padding:         '16px 8px',
+    minWidth:        0,
     flex:            1,
     gap:             '2px',
     // Smooth colour transition when entering/leaving warning state
@@ -80,7 +61,7 @@ const styles = {
   },
   value: {
     fontFamily:    'JetBrains Mono, monospace',
-    fontSize:      '28px',
+    fontSize:      'clamp(19px, 2.5vw, 28px)',
     fontWeight:    700,
     letterSpacing: '1px',
     lineHeight:    1.1,
@@ -89,7 +70,7 @@ const styles = {
   unit: {
     fontFamily:    'JetBrains Mono, monospace',
     fontSize:      '9px',
-    color:         '#334155',
+    color:         '#94a3b8',
     letterSpacing: '2px',
     textTransform: 'uppercase',
   },

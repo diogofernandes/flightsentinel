@@ -1,0 +1,256 @@
+{
+  "scope": "Synthetic generator only; held-out noise seeds, not independent real flight data.",
+  "features": [
+    "airspeed",
+    "pitch",
+    "roll",
+    "vsi"
+  ],
+  "training_seed": 42,
+  "calibration_seed": 43,
+  "test_seeds": [
+    101,
+    102,
+    103
+  ],
+  "calibration_quantile": 0.995,
+  "threshold": 0.5778672679000367,
+  "normal_only": {
+    "frames": 6000,
+    "false_positive_rate": 0.0045,
+    "events": 0
+  },
+  "inference_ms": {
+    "median": 7.2666285000195785,
+    "p95": 13.585644000022512
+  },
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "2.4.6",
+    "scikit_learn": "1.7.2"
+  },
+  "runs": [
+    {
+      "scenario": "descent",
+      "severity": 1.0,
+      "frames": 8997,
+      "model": {
+        "true_positive": 1714,
+        "false_positive": 17,
+        "false_negative": 446,
+        "true_negative": 6820,
+        "precision": 0.9901790872328134,
+        "recall": 0.7935185185185185,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 1188,
+        "false_positive": 0,
+        "false_negative": 972,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.55,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 1.0
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 2.1
+      }
+    },
+    {
+      "scenario": "descent",
+      "severity": 0.5,
+      "frames": 8997,
+      "model": {
+        "true_positive": 1510,
+        "false_positive": 17,
+        "false_negative": 650,
+        "true_negative": 6820,
+        "precision": 0.9888670595939751,
+        "recall": 0.6990740740740741,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 516,
+        "false_positive": 0,
+        "false_negative": 1644,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.2388888888888889,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 1.3
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 3.3
+      }
+    },
+    {
+      "scenario": "bank",
+      "severity": 1.0,
+      "frames": 8997,
+      "model": {
+        "true_positive": 292,
+        "false_positive": 17,
+        "false_negative": 1868,
+        "true_negative": 6820,
+        "precision": 0.9449838187702265,
+        "recall": 0.13518518518518519,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 1083,
+        "false_positive": 0,
+        "false_negative": 1077,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.5013888888888889,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 8,
+        "missed_events": 19,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 5.35
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 2.3
+      }
+    },
+    {
+      "scenario": "bank",
+      "severity": 0.5,
+      "frames": 8997,
+      "model": {
+        "true_positive": 258,
+        "false_positive": 17,
+        "false_negative": 1902,
+        "true_negative": 6820,
+        "precision": 0.9381818181818182,
+        "recall": 0.11944444444444445,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 249,
+        "false_positive": 0,
+        "false_negative": 1911,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.11527777777777778,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 8,
+        "missed_events": 19,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 5.35
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 12,
+        "missed_events": 15,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 3.2
+      }
+    },
+    {
+      "scenario": "airspeed",
+      "severity": 1.0,
+      "frames": 8997,
+      "model": {
+        "true_positive": 367,
+        "false_positive": 17,
+        "false_negative": 1793,
+        "true_negative": 6820,
+        "precision": 0.9557291666666666,
+        "recall": 0.1699074074074074,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 950,
+        "false_positive": 0,
+        "false_negative": 1210,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.4398148148148148,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 11,
+        "missed_events": 16,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 3.2
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 27,
+        "missed_events": 0,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 2.5
+      }
+    },
+    {
+      "scenario": "airspeed",
+      "severity": 0.5,
+      "frames": 8997,
+      "model": {
+        "true_positive": 278,
+        "false_positive": 17,
+        "false_negative": 1882,
+        "true_negative": 6820,
+        "precision": 0.9423728813559322,
+        "recall": 0.1287037037037037,
+        "false_positive_rate": 0.0024864706742723417
+      },
+      "baseline": {
+        "true_positive": 129,
+        "false_positive": 0,
+        "false_negative": 2031,
+        "true_negative": 6837,
+        "precision": 1.0,
+        "recall": 0.059722222222222225,
+        "false_positive_rate": 0.0
+      },
+      "model_events": {
+        "injected_events": 27,
+        "detected_events": 11,
+        "missed_events": 16,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 3.3
+      },
+      "baseline_events": {
+        "injected_events": 27,
+        "detected_events": 6,
+        "missed_events": 21,
+        "false_alert_events": 0,
+        "median_detection_delay_seconds": 3.25
+      }
+    }
+  ]
+}

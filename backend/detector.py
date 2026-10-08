@@ -1,158 +1,80 @@
-# =============================================================
-# detector.py
-#
-# WHAT THIS FILE DOES:
-#   Trains an Isolation Forest model on normal flight data,
-#   then scores each incoming frame with a number from 0 to 1.
-#   Score close to 0 = normal. Score close to 1 = anomaly.
-#
-# HOW ISOLATION FOREST WORKS (simple version):
-#   Imagine throwing random lines across your data to split it.
-#   Anomalies are "alone" in the data space, so they get
-#   isolated with very few cuts. Normal points are surrounded
-#   by similar points, so they need many cuts to isolate.
-#   Fewer cuts = higher anomaly score.
-#
-# WHY UNSUPERVISED?
-#   We don't have labelled examples of every possible anomaly.
-#   We only know what normal flight looks like.
-#   Isolation Forest only needs normal data to train —
-#   it learns the "shape" of normal and flags anything outside it.
-# =============================================================
+"""Isolation Forest calibrated on separate, seeded normal telemetry."""
 
 import numpy as np
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 
-from simulator import TelemetrySimulator, TelemetryFrame
+from .simulator import TelemetryFrame, TelemetrySimulator
+
+# Absolute altitude alone is not abnormal: aircraft can cruise at other levels.
+# Altitude and heading remain visible, but are not detector inputs.
+FEATURES = ("airspeed", "pitch", "roll", "vsi")
+TRAIN_SEED = 42
+CALIBRATION_SEED = 43
+CALIBRATION_QUANTILE = 0.995
 
 
-# The 5 features we feed to the model.
-# Order matters — must be consistent between training and inference.
-FEATURES = ['altitude', 'airspeed', 'pitch', 'roll', 'vsi']
-
-# Score above this threshold triggers an alert.
-# Derived from F1 sweep on evaluation data — not a magic number.
-THRESHOLD = 0.65
+def feature_matrix(frames) -> np.ndarray:
+    x = np.array([[getattr(f, key) for key in FEATURES] for f in frames], dtype=float)
+    if x.ndim != 2 or x.shape[1] != len(FEATURES) or not np.isfinite(x).all():
+        raise ValueError("Telemetry features must be finite numbers")
+    return x
 
 
 class AnomalyDetector:
-    """
-    Wraps an Isolation Forest with a StandardScaler.
-
-    Training:
-        1. Generate 6,000 frames of normal flight
-        2. Fit StandardScaler (makes all features same scale)
-        3. Fit IsolationForest on scaled data
-
-    Inference:
-        1. Scale the incoming frame the same way as training data
-        2. Get raw sklearn score (negative = more anomalous)
-        3. Convert to [0, 1] where 1 = most anomalous
-    """
-
     def __init__(self):
-        self.scaler  = StandardScaler()
-        self.model   = IsolationForest(
-            n_estimators = 200,    # 200 trees in the forest
-                                   # more trees = more stable scores
-                                   # performance plateaus around 150, we use 200 for margin
-            contamination = 0.05,  # we expect at most 5% of training data to be anomalous
-                                   # (our training data is 100% normal, but this calibrates sensitivity)
-            random_state  = 42,    # makes results reproducible
-            n_jobs        = -1,    # use all CPU cores
-        )
+        self.model = IsolationForest(n_estimators=200, contamination="auto",
+                                     random_state=TRAIN_SEED, n_jobs=1)
+        self.threshold = None
         self._trained = False
 
+    @staticmethod
+    def normal_data(seed: int, n: int = 6000) -> np.ndarray:
+        sim = TelemetrySimulator(seed=seed, anomalies=False)
+        return feature_matrix([sim.next_frame() for _ in range(n)])
+
     def train(self):
-        """
-        Generate training data and fit the model.
-        Called once at startup — takes about 5 seconds.
-        """
-        print("[Detector] Generating training data...")
-        X_train = self._generate_normal_data(n=6000)
-
-        print("[Detector] Fitting StandardScaler...")
-        # StandardScaler: subtracts mean, divides by std dev
-        # Result: every feature has mean=0, std=1
-        # WHY: without this, altitude (range ~7800-8200) would dominate
-        # over pitch (range -3 to +3), which would be nearly ignored
-        self.scaler.fit(X_train)
-        X_scaled = self.scaler.transform(X_train)
-
-        print("[Detector] Training Isolation Forest...")
-        self.model.fit(X_scaled)
+        self.model.fit(self.normal_data(TRAIN_SEED))
+        calibration = self.scores(self.normal_data(CALIBRATION_SEED))
+        self.threshold = float(np.quantile(calibration, CALIBRATION_QUANTILE))
         self._trained = True
-        print("[Detector] Ready.")
+
+    def scores(self, x: np.ndarray) -> np.ndarray:
+        if not np.isfinite(x).all():
+            raise ValueError("Telemetry features must be finite numbers")
+        # Flip sklearn's negative score without inventing a probability scale.
+        return np.clip(-self.model.score_samples(x), 0.0, 1.0)
 
     def score(self, frame: TelemetryFrame) -> tuple[float, bool]:
-        """
-        Score one telemetry frame.
-
-        Returns:
-            score     float in [0, 1]  — higher = more anomalous
-            is_alert  bool             — True if score > THRESHOLD
-        """
         if not self._trained:
-            return 0.0, False
+            raise RuntimeError("Detector must be trained before scoring")
+        score = float(self.scores(feature_matrix([frame]))[0])
+        return score, score > self.threshold
 
-        # Extract the 5 features as a numpy array
-        # shape: (1, 5) — the model expects a 2D array
-        x = np.array([[
-            frame.altitude,
-            frame.airspeed,
-            frame.pitch,
-            frame.roll,
-            frame.vsi,
-        ]], dtype=np.float32)
 
-        # Scale using the same scaler fitted on training data
-        x_scaled = self.scaler.transform(x)
+class AlertTracker:
+    """Three high frames to enter; five low frames to clear, with hysteresis."""
 
-        # Get raw sklearn score
-        # sklearn convention: more negative = more anomalous
-        # typical range for our data: [-0.8, +0.1]
-        raw = float(self.model.score_samples(x_scaled)[0])
+    def __init__(self, threshold: float, enter_frames: int = 3, exit_frames: int = 5):
+        self.threshold = threshold
+        self.clear_threshold = threshold - 0.03
+        self.enter_frames = enter_frames
+        self.exit_frames = exit_frames
+        self.active = False
+        self.count = 0
+        self.high = self.low = 0
 
-        # Convert to [0, 1] where 1 = most anomalous
-        score = self._normalise(raw)
-        alert = score > THRESHOLD
-        return score, alert
-
-    def _normalise(self, raw: float) -> float:
-        """
-        Convert sklearn raw score to [0, 1] anomaly score.
-
-        Formula:
-            clip the raw score to [-0.8, 0.1]
-            then: score = 1 - (clipped - (-0.8)) / (0.1 - (-0.8))
-            then: clamp to [0, 1]
-
-        This flips the direction (sklearn: negative=anomaly → we want: 1=anomaly)
-        and normalises to a clean 0-1 range for display.
-        """
-        CLIP_LOW  = -0.8
-        CLIP_HIGH =  0.1
-        clipped = max(CLIP_LOW, min(CLIP_HIGH, raw))
-        score   = 1.0 - (clipped - CLIP_LOW) / (CLIP_HIGH - CLIP_LOW)
-        return max(0.0, min(1.0, score))
-
-    def _generate_normal_data(self, n: int) -> np.ndarray:
-        """
-        Generate n normal flight frames for training.
-        We use the simulator in "normal only" mode —
-        the model must NEVER see anomaly data during training.
-        """
-        sim  = TelemetrySimulator()
-        rows = []
-        for _ in range(n):
-            frame = sim._normal_frame()
-            sim.t += 1.0 / sim.RATE_HZ
-            rows.append([
-                frame.altitude,
-                frame.airspeed,
-                frame.pitch,
-                frame.roll,
-                frame.vsi,
-            ])
-        return np.array(rows, dtype=np.float32)
+    def update(self, score: float) -> bool:
+        if not np.isfinite(score):
+            raise ValueError("Score must be finite")
+        if not self.active:
+            self.high = self.high + 1 if score > self.threshold else 0
+            if self.high >= self.enter_frames:
+                self.active = True
+                self.count += 1
+                self.high = 0
+        else:
+            self.low = self.low + 1 if score < self.clear_threshold else 0
+            if self.low >= self.exit_frames:
+                self.active = False
+                self.low = 0
+        return self.active
